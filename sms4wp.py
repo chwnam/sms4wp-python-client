@@ -5,7 +5,6 @@ import urllib
 import urllib2
 import poster
 
-default_locale = None
 auth_email = ''   # auth email
 auth_token = ''   # auth token provided by sms4wp.com
 auth_digest = ''  # auth digest
@@ -13,8 +12,7 @@ auth_digest = ''  # auth digest
 
 class Sms4wpClient(object):
 
-    #urlroot = 'http://backend.sms4wp.com/api/v0/'
-    urlroot = 'http://sms4wp-ec2/backend/api/v0/'
+    urlroot = 'http://backend.sms4wp.com/api/v0/'
 
     def __init__(self, _auth_email, _auth_token, _auth_digest):
 
