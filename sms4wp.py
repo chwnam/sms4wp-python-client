@@ -5,14 +5,10 @@ import urllib
 import urllib2
 import poster
 
-auth_email = ''   # auth email
-auth_token = ''   # auth token provided by sms4wp.com
-auth_digest = ''  # auth digest
-
 
 class Sms4wpClient(object):
 
-    urlroot = 'http://backend.sms4wp.com/api/v0/'
+    url_root = 'http://backend.sms4wp.com/api/v0/'
 
     def __init__(self, _auth_email, _auth_token, _auth_digest):
 
@@ -62,8 +58,12 @@ class Sms4wpClient(object):
             sys.exit(1)
 
     def whoami(self, params):
-        url = self.__class__.urlroot + 'whoami/'
+        url = self.__class__.url_root + 'whoami/'
         return self.call_api(url=url, params=params, is_multipart=False)  # return code, json_text
+
+    def point(self, params):
+        url = self.__class__.url_root + 'point/'
+        return self.call_api(url=url, params=params, is_multipart=False)
 
 
 def init():
@@ -75,6 +75,8 @@ def init():
     parser.add_argument('-c', '--command', metavar='CMD', type=unicode, nargs=1, help="Command. An API url.")
     parser.add_argument('-p', '--param', metavar="K:V", type=unicode, nargs='*', help="Parameters.")
     parser.add_argument('-f', '--file', type=unicode, nargs='*', help="JSON file form for calling API")
+    parser.add_argument('-a', '--auth', type=unicode,
+                        default='./auth_tokens.json', help="JSON file for authentication. DEFAULT: ./auth_tokens.json")
     args = parser.parse_args()
 
     del argparse
@@ -97,6 +99,14 @@ def parse_params(param_list):
 def main():
     args = init()
     params = None
+
+    with open(args.auth, 'r') as f:
+        import json
+        json_object = json.load(f)
+        auth_email = json_object['auth_email']
+        auth_token = json_object['auth_token']
+        auth_digest = json_object['auth_digest']
+        del json
 
     if args.file:
         do_file_commands(args.file)
