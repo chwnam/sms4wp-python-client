@@ -4,7 +4,16 @@ sms4wp-python-client
 sms4wp.com API client python script.
 
 ## How to Use
-Just assign values to auth_email, auth_token, auth_digest global variables in the top of sms4wp.py code.
+Create a json file named 'auth_tokens.json' in a directory where sms4wp.py script is.
+This file contains an object which has three key-value pairs: 'auth_token', 'auth_digest', 'auth_email'
+
+```
+{
+    "auth_email": "",
+    "auth_token": "",
+    "auth_digest": ""
+}
+```
 
 This code depends on [poster](https://pypi.python.org/pypi/poster/) library. To install,
 ```bash
