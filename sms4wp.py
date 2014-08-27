@@ -8,18 +8,17 @@ import poster
 
 class Sms4wpClient(object):
 
-    url_root = 'http://backend.sms4wp.com/api/v0/'
-
-    def __init__(self, _auth_email, _auth_token, _auth_digest):
+    def __init__(self, _auth_email, _auth_token, _auth_digest, _url_root):
 
         self.auth_email = _auth_email
         self.auth_token = _auth_token
         self.auth_digest = _auth_digest
+        self.url_root = _url_root
 
     def get_auth_header(self):
         return {"AUTHENTICATION": "token %s:%s" % (self.auth_email, self.auth_token)}
 
-    def call_api(self, url, params, is_multipart):
+    def call_api(self, url, params, method, is_multipart):
         header = self.get_auth_header()
 
         if is_multipart:
@@ -30,17 +29,25 @@ class Sms4wpClient(object):
             poster.streaminghttp.register_openers()
             datagen, headers = poster.encode.multipart_encode(params)
             headers = dict(headers, header)
-            code, res = self.send_request(url, datagen, headers)
+            code, res = self.send_request(url, datagen, headers, method.upper())
 
         else:
             data = urllib.urlencode(params) if params else None
-            code, res = self.send_request(url, data, header)
+            code, res = self.send_request(url, data, header, method.upper())
 
         return code, res
 
-    def send_request(self, url, data, header):
+    def send_request(self, url, data, header, method):
+
         try:
-            req = urllib2.Request(url, data, header)
+            if method == 'GET':
+                url += '?%s' % (data, ) if data else ''
+                req = urllib2.Request(url, None, header)
+            else:
+                req = urllib2.Request(url, data, header)
+                req.get_method = lambda: method
+
+            print 'connecting to %s' % (url, )
             con = urllib2.urlopen(req)
             res = con.read()
             code = con.getcode()
@@ -50,20 +57,25 @@ class Sms4wpClient(object):
         except urllib2.HTTPError as e:
             return e.code, e.read()
 
-    def do_action(self, command, params):
+    def do_action(self, command, method, params):
         try:
-            return self.__getattribute__(command)(params)
-        except AttributeError as e:
-            print >> sys.stderr, "command '%s' is unimplemented, or unsupported API." % (command, )
+            return self.__getattribute__(command)(method, params)
+        except AttributeError:
+            print >> sys.stderr, \
+                "command '%s' for method '%s' is unimplemented, or unsupported API." % (command, method)
             sys.exit(1)
 
-    def whoami(self, params):
-        url = self.__class__.url_root + 'whoami/'
-        return self.call_api(url=url, params=params, is_multipart=False)  # return code, json_text
+    def whoami(self, method, params):
+        url = self.url_root + 'whoami/'
+        return self.call_api(url=url, params=params, is_multipart=False, method=method)  # return code, json_text
 
-    def point(self, params):
-        url = self.__class__.url_root + 'point/'
-        return self.call_api(url=url, params=params, is_multipart=False)
+    def point(self, method, params):
+        url = self.url_root + 'point/'
+        return self.call_api(url=url, params=params, is_multipart=False, method=method)
+
+    def user(self, method, params):
+        url = self.url_root + 'user/'
+        return self.call_api(url=url, params=params, is_multipart=False, method=method)
 
 
 def init():
@@ -77,6 +89,12 @@ def init():
     parser.add_argument('-f', '--file', type=unicode, nargs='*', help="JSON file form for calling API")
     parser.add_argument('-a', '--auth', type=unicode,
                         default='./auth_tokens.json', help="JSON file for authentication. DEFAULT: ./auth_tokens.json")
+    parser.add_argument('-u', '--url-root', type=unicode,
+                        default='http://backend.sms4wp.com/api/v0/',
+                        help="Override API URL root. Put a slash at the end of string.")
+    parser.add_argument('-m', '--method', type=unicode, default='GET', choices=['GET', 'POST', 'PUT', 'DELETE'],
+                        help='Default: GET')
+
     args = parser.parse_args()
 
     del argparse
@@ -116,8 +134,10 @@ def main():
 
     if args.command:
         command = args.command[0]
-        client = Sms4wpClient(auth_email, auth_token, auth_digest)
-        code, json_text = client.do_action(command, params)
+        method = args.method
+
+        client = Sms4wpClient(auth_email, auth_token, auth_digest, _url_root=args.url_root)
+        code, json_text = client.do_action(command, method, params)
 
         print 'server response: %s' % (code, )
         print 'JSON text: %s' % (json_text, )
