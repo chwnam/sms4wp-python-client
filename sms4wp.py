@@ -77,6 +77,10 @@ class Sms4wpClient(object):
         url = self.url_root + 'user/'
         return self.call_api(url=url, params=params, is_multipart=False, method=method)
 
+    def transaction(self, method, params):
+        url = self.url_root + 'transaction/'
+        return self.call_api(url=url, params=params, is_multipart=False, method=method)
+
 
 def init():
 
