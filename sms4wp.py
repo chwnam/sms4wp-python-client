@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import json
 import sys
 import urllib
 import urllib2
@@ -22,13 +23,13 @@ class Sms4wpClient(object):
         header = self.get_auth_header()
 
         if is_multipart:
-            for k, v in params:
+            for k, v in params.items():
                 if v[0] == '@':  # handle file macro
                     params[k] = open(v[1:], 'rb')
 
             poster.streaminghttp.register_openers()
             datagen, headers = poster.encode.multipart_encode(params)
-            headers = dict(headers, header)
+            headers.update(header)
             code, res = self.send_request(url, datagen, headers, method.upper())
 
         else:
@@ -81,6 +82,13 @@ class Sms4wpClient(object):
         url = self.url_root + 'transaction/'
         return self.call_api(url=url, params=params, is_multipart=False, method=method)
 
+    def messaging(self, method, params):
+        url = self.url_root + 'messaging/'
+
+        if 'bulk_file' in params:
+            return self.call_api(url=url, params=params, is_multipart=True, method=method)
+        else:
+            return self.call_api(url=url, params=params, is_multipart=False, method=method)
 
 def init():
 
@@ -111,10 +119,23 @@ def do_file_commands(file_name):
 
 
 def parse_params(param_list):
+
     params = dict()
     for item in param_list:
-        k, v = item.split(':')
-        params[k] = v
+        if item[0] == '@':
+            with open(item[1:], 'r') as f:
+                params.update(json.load(f))
+            for k, v in params.items():
+                if isinstance(v, unicode):
+                    params[k] = v.encode('utf-8')
+        else:
+            idx = item.find(':')
+            k = item[:idx].strip()
+            v = item[idx+1:].strip()
+            params[k] = v
+
+    # utf-8 encode plz
+    print 'params:', params
     return params
 
 
