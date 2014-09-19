@@ -1,0 +1,7 @@
+{
+	"sender_phone": "010-9908-3348",
+	"message_body": "한글 테스트. 우리는 메시징",
+	"receivers": "[{\"name\": \"\", \"number\": \"010-9908-3348\"}]",
+	"is_test": "no",
+	"message_type": "sms"
+}

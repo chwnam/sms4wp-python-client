@@ -60,35 +60,56 @@ class Sms4wpClient(object):
 
     def do_action(self, command, method, params):
         try:
-            return self.__getattribute__(command)(method, params)
+            return self.__getattribute__('action_' + command)(method, params)
         except AttributeError:
             print >> sys.stderr, \
                 "command '%s' for method '%s' is unimplemented, or unsupported API." % (command, method)
             sys.exit(1)
 
-    def whoami(self, method, params):
+    def action_whoami(self, method, params):
         url = self.url_root + 'whoami/'
         return self.call_api(url=url, params=params, is_multipart=False, method=method)  # return code, json_text
 
-    def point(self, method, params):
-        url = self.url_root + 'point/'
+    def action_test_task(self, method, params):
+        url = self.url_root + 'test_task/'
         return self.call_api(url=url, params=params, is_multipart=False, method=method)
 
-    def user(self, method, params):
+    def action_auth_token_grant(self, method, params):
+        url = self.url_root + 'auth_token/grant/'
+        return self.call_api(url=url, params=params, is_multipart=False, method=method)
+
+    def action_auth_token_revoke(self, method, params):
+        url = self.url_root + 'auth_token/revoke/'
+        return self.call_api(url=url, params=params, is_multipart=False, method=method)
+
+    def action_user_point(self, method, params):
+        url = self.url_root + 'user_point/'
+        return self.call_api(url=url, params=params, is_multipart=False, method=method)
+
+    def action_auth_token(self, method, params):
+        url = self.url_root + 'auth_token/'
+        return self.call_api(url=url, params=params, is_multipart=False, method=method)
+
+    def action_user(self, method, params):
         url = self.url_root + 'user/'
         return self.call_api(url=url, params=params, is_multipart=False, method=method)
 
-    def transaction(self, method, params):
+    def action_transaction(self, method, params):
         url = self.url_root + 'transaction/'
         return self.call_api(url=url, params=params, is_multipart=False, method=method)
 
-    def messaging(self, method, params):
-        url = self.url_root + 'messaging/'
+    def action_message(self, method, params):
+        url = self.url_root + 'message/'
 
-        if 'bulk_file' in params:
-            return self.call_api(url=url, params=params, is_multipart=True, method=method)
-        else:
+        if method == 'POST':
+            if 'bulk_file' in params:
+                return self.call_api(url=url, params=params, is_multipart=True, method=method)
+            else:
+                return self.call_api(url=url, params=params, is_multipart=False, method=method)
+
+        if method == 'GET':
             return self.call_api(url=url, params=params, is_multipart=False, method=method)
+
 
 def init():
 
